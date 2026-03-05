@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>vSAN 9.0 ESA &ndash; Data Placement &amp; Failure Simulator</title>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+
+<!-- ── HEADER ───────────────────────────────────────────── -->
+<header class="vc-header">
+  <div class="vc-header-left">
+    <div class="vc-brand">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <rect width="24" height="24" rx="2" fill="#0079B8"/>
+        <path d="M4 8L12 17L20 8" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M8 8L12 13L16 8" stroke="#7FC3E3" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="vc-brand-name">vSAN 9.0 ESA  - Data Placements and Failure Scenarios </span>
+    </div>
+  </div>
+</header>
+
+
+<!-- ── APP BODY ──────────────────────────────────────────── -->
+<div class="vc-body">
+
+  <!-- ════ TOOLBAR ══════════════════════════════════════════ -->
+  <div class="vc-toolbar">
+
+    <div class="vc-fg">
+      <label class="vc-flabel">Cluster Hosts</label>
+      <div class="vc-fg-row">
+        <div class="vc-stepper">
+          <button class="vc-stp-btn" id="btnDecrease" title="Remove host">
+            <svg width="10" height="2" viewBox="0 0 10 2"><line x1="0" y1="1" x2="10" y2="1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+          <span class="vc-stp-val" id="hostCount">3</span>
+          <button class="vc-stp-btn" id="btnIncrease" title="Add host">
+            <svg width="10" height="10" viewBox="0 0 10 10"><line x1="5" y1="0" x2="5" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="0" y1="5" x2="10" y2="5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <span class="vc-fhint">3 &ndash; 8 hosts</span>
+      </div>
+    </div>
+
+    <div class="vc-fg">
+      <label class="vc-flabel" for="failureTarget">Failure Target</label>
+      <div class="vc-sel-wrap">
+        <select id="failureTarget" class="vc-sel">
+          <option value="host">Host failure</option>
+          <option value="drive">NVMe drive failure</option>
+        </select>
+        <svg class="vc-sel-arrow" width="10" height="6" viewBox="0 0 10 6"><polyline points="0,0 5,6 10,0" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+
+    <div class="vc-fg">
+      <label class="vc-flabel" style="visibility:hidden">Actions</label>
+      <div class="vc-fg-row">
+        <button class="vc-btn vc-btn-danger" id="btnSimulate">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1.5L13 12.5H1L7 1.5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><line x1="7" y1="5.5" x2="7" y2="8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="7" cy="10" r="0.8" fill="currentColor"/></svg>
+          SIMULATE FAILURE
+        </button>
+        <button class="vc-btn vc-btn-outline" id="btnReset">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M12.5 7A5.5 5.5 0 1 1 7 1.5a5.5 5.5 0 0 1 3.9 1.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><polyline points="9.5,0.5 13,2 11.5,5.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          RESET
+        </button>
+      </div>
+    </div>
+
+    <div class="vc-status" id="statusBar"></div>
+
+  </div><!-- /toolbar -->
+
+  <!-- ════ CLUSTER ══════════════════════════════════════════ -->
+  <div class="vc-card">
+    <div class="vc-card-hdr">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="1" y="2" width="14" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="1" y="9" width="14" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><circle cx="12.5" cy="4.5" r="1" fill="currentColor"/><circle cx="12.5" cy="11.5" r="1" fill="currentColor"/></svg>
+      <span>Cluster Topology</span>
+      <span class="vc-card-hint">Click a VM to inspect &bull; click a host or NVMe drive to target for failure</span>
+    </div>
+    <div class="vc-card-body">
+      <div id="cluster" class="cluster-canvas"></div>
+    </div>
+  </div>
+
+  <!-- ════ BOTTOM ROW ═══════════════════════════════════════ -->
+  <div class="vc-row2">
+
+    <!-- Data Placement -->
+    <div class="vc-card">
+      <div class="vc-card-hdr">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="5.5" height="5.5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="8" y="1" width="5.5" height="5.5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="1" y="8" width="5.5" height="5.5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="8" y="8" width="5.5" height="5.5" rx="1" stroke="currentColor" stroke-width="1.3"/></svg>
+        <span>Data Placement</span>
+      </div>
+      <div class="vc-card-body">
+        <div id="dataPlacement" class="dp-body">
+          <div class="dp-empty">
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none"><circle cx="18" cy="18" r="15" stroke="#b3c4d0" stroke-width="1.5"/><path d="M18 11v8" stroke="#b3c4d0" stroke-width="2" stroke-linecap="round"/><circle cx="18" cy="24" r="1.3" fill="#b3c4d0"/></svg>
+            <p>Select a VM to view its<br/>ESA data placement diagram</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="vc-card">
+      <div class="vc-card-hdr">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="4.5" height="3.5" rx="0.5" fill="currentColor" opacity="0.6"/><line x1="7.5" y1="4.8" x2="15" y2="4.8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><rect x="1" y="9" width="4.5" height="3.5" rx="0.5" fill="currentColor" opacity="0.35"/><line x1="7.5" y1="10.8" x2="15" y2="10.8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        <span>Legend</span>
+      </div>
+      <div class="vc-card-body">
+        <table class="leg-tbl">
+          <tbody>
+            <tr><td><span class="sw sw-vm-normal"></span></td>      <td>Normal VM</td></tr>
+            <tr><td><span class="sw sw-vm-impacted"></span></td>    <td>Impacted VM &mdash; accessible, degraded</td></tr>
+            <tr><td><span class="sw sw-vm-resync"></span></td>      <td>Resyncing VM &mdash; rebuild in progress</td></tr>
+            <tr><td><span class="sw sw-vm-unrecov"></span></td>     <td>Unrecoverable VM &mdash; FTT exceeded</td></tr>
+            <tr><td><span class="sw sw-drive-ok"></span></td>       <td>Healthy NVMe &nbsp;<em>("P" = parity)</em></td></tr>
+            <tr><td><span class="sw sw-failed"></span></td>         <td>Failed host / NVMe drive</td></tr>
+            <tr><td><span class="sw sw-perf"></span></td>           <td>Performance leg drive</td></tr>
+            <tr><td><span class="sw sw-cap"></span></td>            <td>Capacity leg drive</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /row2 -->
+
+  <!-- ════ STEPS ════════════════════════════════════════════ -->
+  <div class="vc-steps">
+    <strong>How to use:</strong>
+    <span class="stp"><em>1</em>Adjust host count</span><span class="stp-arr">›</span>
+    <span class="stp"><em>2</em>Click a VM / host / drive</span><span class="stp-arr">›</span>
+    <span class="stp"><em>3</em>Choose failure target</span><span class="stp-arr">›</span>
+    <span class="stp"><em>4</em>Click SIMULATE FAILURE</span><span class="stp-arr">›</span>
+    <span class="stp"><em>5</em>RESET to restart</span>
+  </div>
+
+</div><!-- /vc-body -->
+<script src="app.js"></script>
+</body>
+</html>
