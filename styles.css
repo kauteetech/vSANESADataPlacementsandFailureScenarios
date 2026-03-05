@@ -256,6 +256,7 @@ a:hover{text-decoration:underline}
 .sw-failed      {background:var(--drv-fail)}
 .sw-perf        {background:var(--drv-perf);outline:2px solid var(--drv-pf-b)}
 .sw-cap         {background:var(--drv-cap); outline:2px solid var(--drv-cp-b)}
+.sw-parity      {background:var(--drv-par)}
 
 /* ── Steps footer ────────────────────────────────────────── */
 .vc-steps{background:var(--white);border:1px solid var(--bd);box-shadow:var(--sh);
